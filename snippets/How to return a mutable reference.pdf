@@ -1,0 +1,50 @@
+I started to play around with rust, and in one of my tests and did the following code:
+
+```
+fn main() {
+    match std::io::Command::new("ls").arg("/mnt").output() {
+        Ok(o) => println!("ls /mnt:\n{}", String::from_utf8_lossy(o.output.as_slice())),
+        Err(e) => fail!("Ops! {}", e),
+    };
+    match std::io::Command::new("ls").arg("/media").output() {
+        Ok(o) => println!("ls /media: {}", String::from_utf8_lossy(o.output.as_slice())),
+        Err(e) => fail!("Ops! {}", e),
+    };
+}
+
+```
+
+The code above works fine.
+
+Then I decided to make a function to return the command I am instantiating, since they are so similar. Something like:
+
+```
+fn main() {
+    match ls("/mnt").output() {
+        Ok(o) => println!("ls /mnt:\n{}", String::from_utf8_lossy(o.output.as_slice())),
+        Err(e) => fail!("Ops! {}", e),
+    };
+    match ls("/media").output() {
+        Ok(o) => println!("ls /media: {}", String::from_utf8_lossy(o.output.as_slice())),
+        Err(e) => fail!("Ops! {}", e),
+    };
+}
+
+fn ls(path: &str) -> &std::io::Command {
+    std::io::Command::new("ls").arg(path)
+}
+
+```
+
+This one doesn't work.
+
+I got `reference must be valid for the anonymous lifetime defined on the block at 12:39 ...but borrowed value is only valid for the block at 12:39`.
+
+Okay, I guess I got it. The problem is that the lifetime of `arg`'s return is bound to the `ls` function scope hence making the compilation error when returning it (right?).
+
+I tried using a box without success. I believe to make it work I should used a [named lifetime](http://doc.rust-lang.org/guide-lifetimes.html#named-lifetimes) but I got to be honest that I didn't (yet) get the concept.
+
+**How do I return the `Command` created in `ls` to outside of it's scope?**
+
+I am using rustc 0.12.0. Don't restrain yourself from using C\+\+ *stuff* on your answer, I got some experience on it.
+
